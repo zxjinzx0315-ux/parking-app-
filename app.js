@@ -529,12 +529,10 @@ function ensureKakaoMapsLoaded() {
   if (window.kakao?.maps?.load) return Promise.resolve();
   const key = getKakaoJsKey();
   if (!key) {
-    showKakaoSetup("JavaScript 키가 비어있습니다. 위 입력칸에 카카오 JavaScript 키를 저장해 주세요.");
-    banner("카카오맵 JavaScript 키가 필요합니다.");
+    banner("⚙️ 설정에서 카카오 JavaScript 키를 입력해 주세요.");
     return Promise.reject(new Error("missing kakao js key"));
   }
   paintMapProviderPill();
-  hideKakaoSetup();
   bannerHide();
   return new Promise((resolve, reject) => {
     const already = document.querySelector('script[data-kakao-maps="1"]');
@@ -547,18 +545,18 @@ function ensureKakaoMapsLoaded() {
     s.defer = true;
     s.async = true;
     s.dataset.kakaoMaps = "1";
-    // autoload=false so we can call kakao.maps.load after script is ready
     s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(key)}&autoload=false&libraries=services`;
     s.onload = () => {
       if (!window.kakao?.maps?.load) {
-        showKakaoSetup("카카오맵 SDK는 로드됐는데 초기화(load)가 없습니다. 키/네트워크를 확인해 주세요.");
+        banner("카카오맵 초기화 실패 · ⚙️ 설정에서 키/도메인을 확인해 주세요.");
         reject(new Error("kakao maps load missing"));
         return;
       }
+      bannerHide();
       window.kakao.maps.load(() => resolve());
     };
     s.onerror = () => {
-      showKakaoSetup("카카오맵 스크립트 로드에 실패했습니다. (네트워크/방화벽 차단 또는 키/도메인 설정 문제)");
+      banner("카카오맵 로드 실패 · ⚙️ 설정에서 키/도메인을 확인해 주세요.");
       reject(new Error("kakao maps script error"));
     };
     document.head.appendChild(s);
