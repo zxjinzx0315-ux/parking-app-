@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>서울 공영주차장</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=SUIT:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg" aria-hidden="true"></div>
+
+    <main class="page">
+
+      <!-- 헤더 -->
+      <header class="topBar">
+        <div class="topBarLeft">
+          <span class="topLogo">🅿️ 서울 공영주차장</span>
+          <span id="countPill" class="pill muted" aria-live="polite">준비 중…</span>
+          <span id="updatedAtPill" class="pill muted" aria-live="polite"></span>
+        </div>
+        <button class="btn ghost slim" id="btnOpenSettings" type="button" title="API 키 설정">⚙️ 설정</button>
+        <button class="btn primary slim" id="btnRefresh" type="button">
+          <span aria-hidden="true">🔁</span>
+          <span id="btnRefreshLabel">새로고침</span>
+        </button>
+      </header>
+
+      <!-- 검색바 -->
+      <section class="searchBar card">
+        <div class="searchGroup">
+          <label class="searchLabel" for="stationInput">🚇 역주변 &amp; 주소 검색</label>
+          <div class="searchRow">
+            <input
+              id="stationInput"
+              class="control"
+              type="search"
+              placeholder="예) 강남역, 종로역"
+              autocomplete="off"
+            />
+            <button class="btn ghost slim" id="btnClearStation" type="button">초기화</button>
+          </div>
+          <div id="stationHint" class="hint" aria-live="polite"></div>
+
+          <!-- 전기차 필터 -->
+          <div class="filterRow">
+            <button class="filterChip" id="btnFilterEv" type="button" data-filter="ev">⚡ 전기차 충전 포함</button>
+          </div>
+        </div>
+
+        <!-- 검색 위치 기준 TOP3 -->
+        <div id="nearestTop3" class="nearestRow" aria-label="검색 위치 기준 가까운 주차장 TOP3" style="margin-top:6px"></div>
+      </section>
+
+      <!-- 지도 + 사이드 -->
+      <section class="card mapCard" aria-label="지도 패널">
+        <div class="mapChrome">
+          <div id="mapProviderPill" class="pill muted">지도: 카카오맵 JS SDK (JavaScript 키 필요)</div>
+        </div>
+
+        <!-- 숨김 입력 (JS 참조용) -->
+        <div id="regionSetup" hidden>
+          <input id="ggKeyInput" type="hidden" />
+          <input id="icKeyInput" type="hidden" />
+          <div id="regionSetupHint"></div>
+        </div>
+
+        <div class="workspace">
+          <div class="mapColumn">
+            <div id="map" class="mapBox" aria-label="카카오 지도"></div>
+          </div>
+
+          <aside class="sideColumn">
+            <div id="detailPanel" class="detailEmpty" aria-live="polite">지도에서 주차장(P)을 클릭해 주세요.</div>
+
+            <div class="tabBar" role="tablist" aria-label="주변 장소 카테고리">
+              <button class="tab is-active" type="button" role="tab" aria-selected="true" data-explore-tab="food">🍜 맛집</button>
+              <button class="tab" type="button" role="tab" aria-selected="false" data-explore-tab="fuel">⛽ 주유소</button>
+            </div>
+            <div class="pill muted" style="margin:6px 0 4px;font-size:11px">선택 주차장 반경 800 m · 맛집은 카카오 인기순</div>
+            <div id="exploreResults" class="exploreGrid" aria-live="polite"></div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- 숨김 목록 (JS에서만 사용) -->
+      <section hidden>
+        <div id="lotListGrid"></div>
+      </section>
+
+      <div id="toast" class="toast" role="status" aria-live="assertive"></div>
+      <div id="errorArea" class="errorArea" hidden></div>
+    </main>
+
+    <!-- API 키 설정 모달 -->
+    <div id="settingsModal" class="modalBackdrop" hidden>
+      <div class="modalBox" role="dialog" aria-modal="true" aria-label="API 키 설정">
+        <div class="modalHeader">
+          <h2 class="modalTitle">⚙️ API 키 설정</h2>
+          <button id="btnCloseSettings" type="button" class="btn ghost slim">✕ 닫기</button>
+        </div>
+
+        <div class="settingsSection">
+          <div class="settingsSectionTitle">🗺️ 카카오맵</div>
+          <div class="hint" style="margin-bottom:8px">
+            <a href="https://developers.kakao.com" target="_blank" rel="noopener">카카오 디벨로퍼스</a>
+            → 내 앱 → 앱 키에서 복사<br/>
+            • <strong>JavaScript 키</strong>: 지도 표시용<br/>
+            • <strong>REST API 키</strong>: 맛집·주유소 검색용
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <input id="kakaoJsKeyInput" class="control" type="password" placeholder="JavaScript 키" autocomplete="off" />
+            <input id="kakaoRestKeyInput" class="control" type="password" placeholder="REST API 키 (맛집·주유소 검색용)" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="settingsSection">
+          <div class="settingsSectionTitle">🏙️ 경기도 주차장 API</div>
+          <div class="hint" style="margin-bottom:8px">
+            <a href="https://openapigits.gg.go.kr" target="_blank" rel="noopener">경기도 공공데이터포털</a>에서 발급
+          </div>
+          <input id="ggKeyInputModal" class="control" type="password" placeholder="경기도 API 키" autocomplete="off" />
+        </div>
+
+        <div class="settingsSection">
+          <div class="settingsSectionTitle">🌊 인천 주차장 API</div>
+          <div class="hint" style="margin-bottom:8px">
+            <a href="https://data.go.kr" target="_blank" rel="noopener">공공데이터포털 (data.go.kr)</a>에서 발급
+          </div>
+          <input id="icKeyInputModal" class="control" type="password" placeholder="인천 API 키" autocomplete="off" />
+        </div>
+
+        <div id="kakaoSetupHint" class="hint" aria-live="polite" style="color:#e53e3e;margin-top:4px"></div>
+
+        <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+          <button id="btnSaveKakaoJsKey" type="button" class="btn primary">💾 저장 &amp; 새로고침</button>
+        </div>
+      </div>
+    </div>
+
+    <script defer src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,735 @@
+:root {
+  color-scheme: light;
+  --ink: #081125;
+  --muted: #4c5f7c;
+  --blue-900: #001c5c;
+  --blue-600: #2663ff;
+  --blue-200: #c7dcff;
+  --surface: rgba(255, 255, 255, 0.9);
+  --stroke: rgba(14, 60, 150, 0.12);
+  --shadow-xl: 0 25px 60px rgba(7, 32, 90, 0.15);
+  --shadow-card: 0 15px 40px rgba(8, 30, 80, 0.12);
+  --radius-xxl: 28px;
+  --radius-xl: 20px;
+  --radius-lg: 16px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: "SUIT", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+  background: radial-gradient(circle at 10% -10%, #f4f9ff 0%, #ffffff 52%, #eaf2ff 100%);
+  color: var(--ink);
+}
+
+a {
+  color: var(--blue-600);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.bg {
+  position: fixed;
+  inset: -20vmax;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(38, 99, 255, 0.15), transparent 55%),
+    radial-gradient(circle at 80% 18%, rgba(0, 28, 92, 0.12), transparent 60%),
+    radial-gradient(circle at 52% 80%, rgba(199, 220, 255, 0.45), transparent 55%);
+  filter: saturate(118%);
+  z-index: -2;
+}
+
+/* ── 레이아웃 ── */
+.page {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+/* ── 상단 헤더바 ── */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+.topBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.topLogo {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--blue-900);
+  letter-spacing: -0.02em;
+}
+
+/* ── 검색바 ── */
+.searchBar {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  padding: 16px 20px;
+  flex-wrap: wrap;
+}
+
+.searchGroup {
+  flex: 1;
+  min-width: 220px;
+}
+
+.searchLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+
+.searchRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.searchDivider {
+  width: 1px;
+  background: var(--stroke);
+  margin: 0 20px;
+  align-self: stretch;
+}
+
+/* ── 기존 brandBar 등 숨김 ── */
+.brandBar { display: none; }
+.brandTitle {
+  margin: 6px 0 8px;
+  font-size: clamp(26px, 3vw, 34px);
+  letter-spacing: -0.035em;
+  color: var(--blue-900);
+}
+
+.brandSub {
+  margin: 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.brandActions .btn.primary {
+  min-width: 160px;
+}
+
+.badge {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: linear-gradient(120deg, rgba(38, 99, 255, 0.15), rgba(255, 255, 255, 0.6));
+  color: var(--blue-900);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gridThree {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+}
+
+.panel {
+  padding: 22px 24px 24px;
+  border-radius: var(--radius-xl);
+}
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panelKicker {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--muted);
+}
+
+.panelTitle {
+  margin: 8px 0 12px;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(12, 40, 99, 0.12);
+  background: rgba(255, 255, 255, 0.8);
+  font-weight: 800;
+}
+
+.pill.muted {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.pillBtn {
+  appearance: none;
+  border: none;
+  background: none;
+  color: var(--blue-600);
+  font-weight: 900;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.control {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  border: 1px solid rgba(8, 30, 80, 0.12);
+  font-size: 15px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.control:focus-visible {
+  outline: 3px solid rgba(38, 99, 255, 0.35);
+}
+
+.hint {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  min-height: 18px;
+}
+
+.btn {
+  appearance: none;
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, #274bff, #5897ff);
+  color: white;
+}
+
+.btn.secondary {
+  background: rgba(8, 30, 80, 0.08);
+  color: var(--blue-900);
+}
+
+.btn.warning {
+  background: rgba(255, 235, 59, 0.25);
+}
+
+.btn.flat {
+  background: transparent;
+}
+
+.btn.ghost {
+  border: 1px dashed rgba(8, 30, 80, 0.18);
+}
+
+.btn.slim {
+  margin-top: 10px;
+  width: fit-content;
+  padding: 8px 12px;
+  font-weight: 800;
+}
+
+.btn.icon {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.btn.star.is-active {
+  background: rgba(89, 151, 255, 0.22);
+  color: var(--blue-900);
+  border-style: solid;
+  border-color: rgba(39, 75, 255, 0.35);
+}
+
+.divider {
+  height: 1px;
+  background: rgba(8, 30, 80, 0.08);
+  margin: 16px 0;
+}
+
+.nearestRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.miniCard {
+  flex: 1 1 180px;
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  border: 1px solid rgba(8, 30, 80, 0.12);
+  background: rgba(240, 247, 255, 0.9);
+}
+
+.miniCard.low {
+  background: rgba(255, 230, 230, 0.85);
+}
+
+.miniCard.good {
+  background: rgba(225, 255, 239, 0.92);
+}
+
+.miniTitle {
+  font-weight: 900;
+  letter-spacing: -0.015em;
+  margin-bottom: 6px;
+}
+
+.miniMetric {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.mapCard {
+  padding: 0;
+  overflow: hidden;
+}
+
+.mapChrome {
+  padding: 14px 20px 0;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
+  gap: 0;
+  min-height: 520px;
+}
+
+.mapColumn {
+  border-right: 1px solid rgba(8, 30, 80, 0.08);
+}
+
+.mapBox {
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+}
+
+.sideColumn {
+  padding: 20px;
+  background: rgba(245, 248, 255, 0.65);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detailCard {
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(8, 30, 80, 0.12);
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--shadow-card);
+}
+
+.detailHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.detailTitle {
+  margin: 0;
+  font-size: 21px;
+  letter-spacing: -0.02em;
+}
+
+.detailMetaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.statChip {
+  border-radius: 14px;
+  padding: 8px 10px;
+  background: rgba(8, 30, 80, 0.05);
+  font-weight: 800;
+}
+
+.statChip strong {
+  color: var(--blue-900);
+}
+
+.actionRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.detailEmpty {
+  border: 2px dashed rgba(8, 30, 80, 0.12);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.tabBar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tab {
+  border-radius: 999px;
+  border: 1px solid rgba(8, 30, 80, 0.12);
+  background: rgba(255, 255, 255, 0.8);
+  font-weight: 800;
+}
+
+.tab.is-active {
+  border-color: var(--blue-600);
+  color: var(--blue-600);
+  background: rgba(38, 99, 255, 0.12);
+}
+
+.exploreGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.exploreItem {
+  border-radius: 14px;
+  border: 1px solid rgba(8, 30, 80, 0.1);
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.exploreItem strong {
+  font-size: 15px;
+}
+
+.exploreItem span {
+  color: var(--muted);
+}
+
+.listCard {
+  padding: 24px;
+}
+
+.lotGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.lotCard {
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(8, 30, 80, 0.12);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 16px;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.lotCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.lotCard.is-low {
+  background: rgba(255, 230, 238, 0.85);
+}
+
+.lotCard.is-good {
+  background: rgba(225, 255, 239, 0.9);
+}
+
+.lotCard.is-selected {
+  border-color: var(--blue-600);
+}
+
+.lotName {
+  font-weight: 900;
+  letter-spacing: -0.015em;
+  margin-bottom: 8px;
+}
+
+.lotFacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-weight: 800;
+}
+
+.footnotes {
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.errorArea {
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  margin-top: 8px;
+  background: rgba(255, 230, 230, 0.85);
+  color: #7a0817;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(0, 10, 30, 0.85);
+  color: white;
+  padding: 14px 16px;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  display: none;
+  z-index: 9999;
+  font-weight: 700;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .mapColumn {
+    border-right: none;
+    border-bottom: 1px solid rgba(8, 30, 80, 0.08);
+  }
+
+  .mapBox {
+    min-height: 420px;
+  }
+}
+
+/* ── 설정 모달 ── */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modalBackdrop[hidden] { display: none; }
+
+.modalBox {
+  background: #fff;
+  border-radius: var(--radius-xl);
+  padding: 28px 32px;
+  width: min(520px, 94vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.modalTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink);
+}
+
+.settingsSection {
+  border-top: 1px solid var(--stroke);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.settingsSectionTitle {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--blue-900);
+  margin-bottom: 6px;
+}
+
+/* ── 경차·전기차 필터 칩 ── */
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--stroke);
+  background: #f8faff;
+  color: var(--muted);
+  font: 600 13px "SUIT", system-ui, sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.filterChip:hover {
+  border-color: var(--blue-600);
+  color: var(--blue-600);
+}
+
+.filterChip.is-active {
+  background: var(--blue-600);
+  border-color: var(--blue-600);
+  color: #fff;
+}
+
+/* ── 맛집/주유소 카드 ── */
+.exploreCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: background 0.12s;
+  cursor: pointer;
+}
+.exploreCard:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.exploreThumbWrap {
+  flex-shrink: 0;
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f1f5ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exploreThumb {
+  width: 54px;
+  height: 54px;
+  object-fit: cover;
+  display: block;
+}
+
+.exploreThumbFallback {
+  font-size: 26px;
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exploreCardBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.exploreCardName {
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exploreCardMeta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exploreAddr {
+  color: var(--muted);
+}
+
+/* ── 요금 표시 ── */
+.feeRow {
+  margin: 6px 0 2px;
+}
+
+.feeChip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #fef9ec;
+  border: 1px solid #f6d860;
+  color: #7a5a00;
+  font: 600 12px "SUIT", system-ui, sans-serif;
+}
