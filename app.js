@@ -802,7 +802,7 @@ function renderDetail() {
 
     <div class="sheetActionRow">
       <button type="button" class="sheetBtn primary" data-action="nav" data-code="${escHtml(lot.code)}">🧭 길안내</button>
-      ${!isParked ? `<button type="button" class="sheetBtn park" id="btnStartParking">🚗 여기 주차</button>` : ""}
+      ${!isParked ? `<button type="button" class="sheetBtn park" id="btnStartParking">주차완료</button>` : ""}
       <button type="button" class="sheetBtn" data-action="share" data-code="${escHtml(lot.code)}">공유</button>
       <button type="button" class="sheetBtn${fav ? " active" : ""}" data-action="star" data-code="${escHtml(lot.code)}">⭐</button>
       <button type="button" class="sheetBtn" id="btnToggleExplore">🍜 주변</button>

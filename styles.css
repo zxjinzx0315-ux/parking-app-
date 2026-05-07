@@ -263,6 +263,8 @@ body {
   background: #f0fdf4;
   border-color: #22c55e;
   color: #15803d;
+  font-size: 12px;
+  padding: 9px 4px;
 }
 
 /* ── 혼잡 예측 ── */
