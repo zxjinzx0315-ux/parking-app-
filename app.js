@@ -70,8 +70,13 @@ function paintMapProviderPill() {
 document.addEventListener("DOMContentLoaded", () => {
   favLoad();
   paintMapProviderPill();
-  void initMap().then(() => {
-    redraw();
+  // 서버에서 카카오 JS 키 자동 로드 (환경변수 설정된 경우)
+  void fetch("/api/config").then(r => r.json()).then(cfg => {
+    if (cfg.kakaoJsKey && !getKakaoJsKey()) {
+      try { localStorage.setItem("KAKAO_MAPS_JS_KEY", cfg.kakaoJsKey); } catch {}
+    }
+  }).catch(() => {}).finally(() => {
+    void initMap().then(() => { redraw(); });
   });
   wire();
   void loadSubwayCsv();
@@ -782,24 +787,25 @@ function fmtFee(lot) {
 }
 
 async function kakaoLocalSearch(mode, lat, lon, signal) {
-  const key = getKakaoRestKey() || getKakaoJsKey();
-  if (!key) throw new Error("카카오 키 없음");
+  // 서버 프록시 우선 사용 (REST 키 숨김)
+  const proxyUrl = `/api/places?mode=${mode}&lat=${lat}&lon=${lon}&query=${encodeURIComponent(mode === "food" ? "맛집" : "")}`;
+  let res = await fetch(proxyUrl, { signal }).catch(() => null);
 
-  let url;
-  if (mode === "food") {
-    // 키워드 검색: 맛집 기준 (카카오맵 리뷰/인기 기반 정렬)
-    url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=맛집&x=${lon}&y=${lat}&radius=${EXPLORE_M}&size=10&sort=accuracy`;
-  } else if (mode === "fuel") {
-    // 카테고리 검색: 주유소
-    url = `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=OL7&x=${lon}&y=${lat}&radius=${EXPLORE_M}&size=10&sort=distance`;
-  } else {
-    url = `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=AT4&x=${lon}&y=${lat}&radius=${EXPLORE_M}&size=10&sort=distance`;
+  // 프록시 실패 시 클라이언트 키로 직접 호출
+  if (!res || !res.ok) {
+    const key = getKakaoRestKey() || getKakaoJsKey();
+    if (!key) throw new Error("카카오 키 없음");
+    let url;
+    if (mode === "food") {
+      url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=맛집&x=${lon}&y=${lat}&radius=${EXPLORE_M}&size=10&sort=accuracy`;
+    } else if (mode === "fuel") {
+      url = `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=OL7&x=${lon}&y=${lat}&radius=${EXPLORE_M}&size=10&sort=distance`;
+    } else {
+      url = `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=AT4&x=${lon}&y=${lat}&radius=${EXPLORE_M}&size=10&sort=distance`;
+    }
+    res = await fetch(url, { headers: { Authorization: `KakaoAK ${key}` }, signal });
   }
 
-  const res = await fetch(url, {
-    headers: { Authorization: `KakaoAK ${key}` },
-    signal,
-  });
   if (!res.ok) throw new Error(`카카오 로컬 ${res.status}`);
   const js = await res.json();
   return (js.documents ?? []).map((d) => ({
@@ -1082,8 +1088,11 @@ async function kakaoGeoSearch(query, hi) {
     return;
   }
   try {
-    const url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=1`;
-    const res = await fetch(url, { headers: { Authorization: `KakaoAK ${key}` } });
+    // 서버 프록시 우선
+    let res = await fetch(`/api/places?mode=geo&query=${encodeURIComponent(query)}`).catch(() => null);
+    if (!res || !res.ok) {
+      res = await fetch(`https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=1`, { headers: { Authorization: `KakaoAK ${key}` } });
+    }
     const js  = await res.json();
     const doc = js.documents?.[0];
     if (doc) {
