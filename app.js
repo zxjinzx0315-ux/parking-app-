@@ -72,10 +72,16 @@ function paintMapProviderPill() {
 document.addEventListener("DOMContentLoaded", () => {
   favLoad();
   paintMapProviderPill();
-  // 서버에서 카카오 JS 키 자동 로드 (환경변수 설정된 경우)
+  // 서버에서 API 키 자동 로드 (환경변수 설정된 경우)
   void fetch("/api/config").then(r => r.json()).then(cfg => {
     if (cfg.kakaoJsKey && !getKakaoJsKey()) {
       try { localStorage.setItem("KAKAO_MAPS_JS_KEY", cfg.kakaoJsKey); } catch {}
+    }
+    if (cfg.ggParkingKey) {
+      try { localStorage.setItem("GG_PARKING_KEY", cfg.ggParkingKey); } catch {}
+    }
+    if (cfg.kakaoRestKey) {
+      try { localStorage.setItem("KAKAO_REST_KEY", cfg.kakaoRestKey); } catch {}
     }
   }).catch(() => {}).finally(() => {
     void initMap().then(() => { redraw(); });
