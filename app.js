@@ -1463,6 +1463,15 @@ function wire() {
   // 🔍 버튼 → 실제 검색·이동
   $("btnSearchStation")?.addEventListener("click", () => stationTyping());
 
+  // 검색창 접기/펼치기 탭
+  $("btnToggleSearch")?.addEventListener("click", () => {
+    const overlay = $("searchOverlay");
+    const icon = $("toggleSearchIcon");
+    if (!overlay) return;
+    const hidden = overlay.classList.toggle("is-hidden");
+    if (icon) icon.textContent = hidden ? "▼" : "▲";
+  });
+
   document.querySelectorAll("[data-explore-tab]").forEach((btn) =>
     btn.addEventListener("click", () => {
       document.querySelectorAll("[data-explore-tab]").forEach((b) => {

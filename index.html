@@ -19,8 +19,11 @@
     <div id="map" aria-label="카카오 지도"></div>
 
     <!-- 검색 오버레이 (지도 위) -->
-    <div class="searchOverlay">
-      <div class="searchOverlayInner">
+    <div class="searchOverlay" id="searchOverlay">
+      <button class="searchOverlayTab" id="btnToggleSearch" type="button" aria-label="검색창 열기/닫기">
+        <span id="toggleSearchIcon">▼</span>
+      </button>
+      <div class="searchOverlayInner" id="searchOverlayInner">
         <div class="searchOverlayRow">
           <span class="searchOverlayLogo">🅿️</span>
           <input

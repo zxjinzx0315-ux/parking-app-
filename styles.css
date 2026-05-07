@@ -49,6 +49,27 @@ body {
   right: 0;
   z-index: 100;
   padding: env(safe-area-inset-top, 8px) 12px 0;
+  transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+}
+.searchOverlay.is-hidden {
+  transform: translateY(calc(-100% + 28px));
+}
+
+.searchOverlayTab {
+  display: block;
+  margin: 0 auto;
+  width: 48px;
+  height: 22px;
+  background: rgba(255,255,255,0.95);
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0 0 12px 12px;
+  cursor: pointer;
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  padding: 0;
+  /* 숨겨졌을 때만 탭이 지도 위에 살짝 보임 */
 }
 
 .searchOverlayInner {
@@ -58,7 +79,7 @@ body {
   border-radius: 18px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.13);
   overflow: hidden;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .searchOverlayRow {
