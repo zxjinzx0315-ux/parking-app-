@@ -136,7 +136,7 @@ body {
   border-radius: 24px 24px 0 0;
   box-shadow: 0 -4px 30px rgba(0,0,0,0.15);
   padding: 0 16px calc(env(safe-area-inset-bottom, 16px) + 16px);
-  max-height: 75vh;
+  max-height: 60vh;
   overflow-y: auto;
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
@@ -164,6 +164,89 @@ body {
   background: var(--blue-600) !important;
   color: #fff !important;
   border-color: var(--blue-600) !important;
+}
+
+/* ── TOP2 카드 ── */
+.top2Row {
+  display: flex;
+  gap: 6px;
+  padding: 0 8px 8px;
+}
+.top2Card {
+  flex: 1;
+  background: rgba(37,99,235,0.07);
+  border: 1px solid rgba(37,99,235,0.15);
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor: pointer;
+  min-width: 0;
+}
+.top2Card:active { background: rgba(37,99,235,0.14); }
+.top2Name {
+  font: 700 12px "SUIT", system-ui, sans-serif;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+.top2Meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── 하단 시트 상세 ── */
+.sheetDetail {
+  padding: 4px 0 8px;
+}
+.sheetDetailTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.sheetDetailName {
+  font: 800 16px "SUIT", system-ui, sans-serif;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.sheetDetailMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.sheetActionRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.sheetBtn {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 6px;
+  border-radius: 12px;
+  border: 1.5px solid var(--stroke);
+  background: #f8faff;
+  color: var(--ink);
+  font: 700 13px "SUIT", system-ui, sans-serif;
+  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
+}
+.sheetBtn.primary {
+  background: var(--blue-600);
+  border-color: var(--blue-600);
+  color: #fff;
+  flex: 2;
+}
+.sheetBtn.active {
+  background: #fef3c7;
+  border-color: #f59e0b;
 }
 
 a {

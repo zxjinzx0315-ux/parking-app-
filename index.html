@@ -33,15 +33,14 @@
           <button class="searchOverlayClear" id="btnClearStation" type="button">✕</button>
         </div>
         <div id="stationHint" class="searchOverlayHint" aria-live="polite"></div>
-        <div class="filterRow" style="padding:0 4px 4px">
+        <!-- TOP2 카드 (검색창 바로 아래) -->
+        <div id="nearestTop3" aria-label="검색 위치 기준 가까운 주차장 TOP2"></div>
+        <div class="filterRow" style="padding:0 8px 8px">
           <button class="filterChip" id="btnFilterEv" type="button">⚡ 전기차 충전</button>
           <button class="filterChip refreshChip" id="btnRefresh" type="button">🔁 <span id="btnRefreshLabel">새로고침</span></button>
         </div>
       </div>
     </div>
-
-    <!-- TOP3 카드 (검색 시 표시) -->
-    <div id="nearestTop3" class="top3Bar" aria-label="검색 위치 기준 가까운 주차장 TOP3"></div>
 
     <!-- 상태 pills -->
     <div class="statusBar">
@@ -52,17 +51,17 @@
     <!-- 하단 시트 (주차장 선택 시) -->
     <div id="bottomSheet" class="bottomSheet" hidden>
       <div class="bottomSheetHandle" id="btnCloseSheet"></div>
-
-      <!-- 주차장 상세 -->
-      <div id="detailPanel" class="detailEmpty" aria-live="polite"></div>
-
-      <!-- 맛집/주유소 탭 -->
-      <div class="tabBar" role="tablist" style="margin-top:12px">
-        <button class="tab is-active" type="button" role="tab" data-explore-tab="food">🍜 맛집</button>
-        <button class="tab" type="button" role="tab" data-explore-tab="fuel">⛽ 주유소</button>
+      <!-- 주차장 상세 (컴팩트) -->
+      <div id="detailPanel" aria-live="polite"></div>
+      <!-- 주변 탭 (토글) -->
+      <div id="exploreSection" style="display:none">
+        <div class="tabBar" role="tablist" style="margin-top:10px">
+          <button class="tab is-active" type="button" role="tab" data-explore-tab="food">🍜 맛집</button>
+          <button class="tab" type="button" role="tab" data-explore-tab="fuel">⛽ 주유소</button>
+        </div>
+        <div class="pill muted" style="font-size:11px;margin:4px 0">반경 800m · 카카오 인기순</div>
+        <div id="exploreResults" class="exploreGrid" aria-live="polite"></div>
       </div>
-      <div class="pill muted" style="font-size:11px;margin:4px 0">반경 800m · 카카오 인기순</div>
-      <div id="exploreResults" class="exploreGrid" aria-live="polite"></div>
     </div>
 
     <!-- 숨김 (JS 참조용) -->

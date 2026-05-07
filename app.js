@@ -591,24 +591,25 @@ function renderNearest() {
     .filter((p) => p.lat != null && p.lon != null)
     .map((p) => ({ p, d: havM(ref.lat, ref.lon, p.lat, p.lon) }))
     .sort((a, b) => a.d - b.d || b.p.remaining - a.p.remaining)
-    .filter(({ d }) => d <= 3000) // 3km 이내만 TOP3
-    .slice(0, 3);
+    .filter(({ d }) => d <= 3000)
+    .slice(0, 2); // TOP2
   if (!top.length) {
-    wrap.innerHTML = `<div class="miniCard"><div class="miniMetric muted">근처 주차장 없음</div></div>`;
+    wrap.innerHTML = "";
     return;
   }
-  wrap.innerHTML = top
-    .map(
-      ({ p, d }, i) =>
-        `<div class="miniCard${p.remaining < 5 ? " low" : p.remaining >= 10 ? " good" : ""}" data-nearest-code="${escHtml(p.code)}">
-          <div class="miniTitle">TOP ${i + 1} · ${escHtml(p.name)}</div>
-          <div class="miniMetric">${(d / 1000).toFixed(2)} km · 잔여 ${p.remaining}
-            ${p.lightDutySpots ? ` · 경차 ${p.lightDutySpots}` : ""}
-            ${p.evCharges ? ` · EV ${p.evCharges}` : ""}
-          </div>
-        </div>`
-    )
-    .join("");
+  const col = (p) => p.remaining < 5 ? "#ef4444" : p.remaining >= 10 ? "#22c55e" : "#2563eb";
+  wrap.innerHTML = `<div class="top2Row">${top.map(({ p, d }) => {
+    const fee = p.payFree ? "무료" : p.bscCrg ? `${p.bscCrg.toLocaleString()}원~` : "";
+    return `<div class="top2Card" data-nearest-code="${escHtml(p.code)}">
+      <div class="top2Name">${escHtml(p.name)}</div>
+      <div class="top2Meta">
+        <span style="color:${col(p)};font-weight:800">${p.remaining}대</span>
+        <span>${(d/1000).toFixed(1)}km</span>
+        ${fee ? `<span>${fee}</span>` : ""}
+        ${p.evCharges ? `<span>⚡${p.evCharges}</span>` : ""}
+      </div>
+    </div>`;
+  }).join("")}</div>`;
 }
 
 function paintUser() {
@@ -740,32 +741,43 @@ function renderDetail() {
   const el = $("detailPanel");
   if (!el) return;
   const lot = findLot(state.pick);
+  const exploreSection = $("exploreSection");
   if (!lot) {
-    el.className = "detailEmpty";
-    el.textContent = "지도 또는 리스트에서 주차장을 선택해 주세요.";
+    el.innerHTML = "";
+    if (exploreSection) exploreSection.style.display = "none";
     return;
   }
-  el.className = "";
   const fav = state.fav.has(lot.code);
-  const y24 =
-    lot.operates24Hours == null ? "확인 필요" : lot.operates24Hours ? "가능 추정" : "제한/확인";
+  const col = lot.remaining < 5 ? "#ef4444" : lot.remaining >= 10 ? "#22c55e" : "#2563eb";
   const feeStr = fmtFee(lot);
-  el.innerHTML = `<div class="detailCard">
-    <div class="detailHeader"><h3 class="detailTitle">${escHtml(lot.name)}</h3></div>
-    <div class="detailMetaRow">
-      <span class="statChip">🅿️ 잔여 <strong>${lot.remaining}</strong> / ${lot.total}</span>
-      <span class="statChip">⚡ EV <strong>${lot.evCharges ?? "—"}</strong></span>
-      <span class="statChip">🕐 24h <strong>${escHtml(y24)}</strong></span>
+  el.innerHTML = `<div class="sheetDetail">
+    <div class="sheetDetailTop">
+      <div>
+        <div class="sheetDetailName">${escHtml(lot.name)}</div>
+        <div class="sheetDetailMeta">
+          <span style="color:${col};font-weight:800">잔여 ${lot.remaining}</span>
+          <span style="color:#888">/ ${lot.total}</span>
+          ${lot.evCharges ? `<span>⚡ ${lot.evCharges}</span>` : ""}
+          ${feeStr ? `<span>💰 ${feeStr}</span>` : ""}
+        </div>
+      </div>
     </div>
-    ${feeStr ? `<div class="feeRow"><span class="feeChip">💰 ${escHtml(feeStr)}</span></div>` : ""}
-    <div class="actionRow">
-      <button type="button" class="btn secondary icon" data-action="nav" data-code="${escHtml(lot.code)}">길안내</button>
-      <button type="button" class="btn secondary icon" data-action="rv" data-code="${escHtml(lot.code)}">로드뷰</button>
-      <button type="button" class="btn secondary icon" data-action="share" data-code="${escHtml(lot.code)}">공유</button>
-      <button type="button" class="btn ghost icon star${
-        fav ? " is-active" : ""
-      }" data-action="star" data-code="${escHtml(lot.code)}">즐겨찾기</button>
-    </div></div>`;
+    <div class="sheetActionRow">
+      <button type="button" class="sheetBtn primary" data-action="nav" data-code="${escHtml(lot.code)}">🧭 길안내</button>
+      <button type="button" class="sheetBtn" data-action="share" data-code="${escHtml(lot.code)}">공유</button>
+      <button type="button" class="sheetBtn" data-action="rv" data-code="${escHtml(lot.code)}">로드뷰</button>
+      <button type="button" class="sheetBtn${fav ? " active" : ""}" data-action="star" data-code="${escHtml(lot.code)}">⭐</button>
+      <button type="button" class="sheetBtn" id="btnToggleExplore">🍜 주변</button>
+    </div>
+  </div>`;
+
+  // 주변 탭 토글
+  el.querySelector("#btnToggleExplore")?.addEventListener("click", () => {
+    if (!exploreSection) return;
+    const open = exploreSection.style.display !== "none";
+    exploreSection.style.display = open ? "none" : "block";
+    if (!open) void exploreRun();
+  });
 }
 
 function fmtFee(lot) {
