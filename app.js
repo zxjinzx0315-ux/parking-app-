@@ -72,9 +72,9 @@ function paintMapProviderPill() {
 document.addEventListener("DOMContentLoaded", () => {
   favLoad();
   paintMapProviderPill();
-  // 서버에서 API 키 자동 로드 (환경변수 설정된 경우)
+  // 서버에서 API 키 로드 → 지도 초기화 → 주차장 데이터 로드 (순서 보장)
   void fetch("/api/config").then(r => r.json()).then(cfg => {
-    if (cfg.kakaoJsKey && !getKakaoJsKey()) {
+    if (cfg.kakaoJsKey) {
       try { localStorage.setItem("KAKAO_MAPS_JS_KEY", cfg.kakaoJsKey); } catch {}
     }
     if (cfg.ggParkingKey) {
@@ -84,11 +84,13 @@ document.addEventListener("DOMContentLoaded", () => {
       try { localStorage.setItem("KAKAO_REST_KEY", cfg.kakaoRestKey); } catch {}
     }
   }).catch(() => {}).finally(() => {
-    void initMap().then(() => { redraw(); });
+    void initMap().then(() => {
+      redraw();
+      void loadParking(false);
+    });
   });
   wire();
   void loadSubwayCsv();
-  void loadParking(false);
 });
 
 function slugify(v) {
