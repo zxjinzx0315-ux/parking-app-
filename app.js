@@ -453,12 +453,13 @@ function applyFilterSort() {
   // 전기차 필터: evCharges > 0 확인된 곳만
   if (state.filterEv) xs = xs.filter((p) => p.evCharges != null && p.evCharges > 0);
   if (state.pivot) {
-    const maxM = STATION_KM * 1000;
-    xs = xs.filter((p) => {
-      if (p.lat == null || p.lon == null) return false;
-      return havM(state.pivot.lat, state.pivot.lon, p.lat, p.lon) <= maxM;
-    });
+    // 필터링 없이 전체 표시, 거리순 정렬만
     xs.sort((a, b) => {
+      const hasA = a.lat != null && a.lon != null;
+      const hasB = b.lat != null && b.lon != null;
+      if (!hasA && !hasB) return 0;
+      if (!hasA) return 1;
+      if (!hasB) return -1;
       const da = havM(state.pivot.lat, state.pivot.lon, a.lat, a.lon);
       const db = havM(state.pivot.lat, state.pivot.lon, b.lat, b.lon);
       return da - db || b.remaining - a.remaining;
@@ -542,7 +543,7 @@ function ensureKakaoMapsLoaded() {
     s.async = true;
     s.dataset.kakaoMaps = "1";
     // autoload=false so we can call kakao.maps.load after script is ready
-    s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(key)}&autoload=false`;
+    s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(key)}&autoload=false&libraries=services`;
     s.onload = () => {
       if (!window.kakao?.maps?.load) {
         showKakaoSetup("카카오맵 SDK는 로드됐는데 초기화(load)가 없습니다. 키/네트워크를 확인해 주세요.");
@@ -587,6 +588,7 @@ function renderNearest() {
     .filter((p) => p.lat != null && p.lon != null)
     .map((p) => ({ p, d: havM(ref.lat, ref.lon, p.lat, p.lon) }))
     .sort((a, b) => a.d - b.d || b.p.remaining - a.p.remaining)
+    .filter(({ d }) => d <= 3000) // 3km 이내만 TOP3
     .slice(0, 3);
   if (!top.length) {
     wrap.innerHTML = `<div class="miniCard"><div class="miniMetric muted">근처 주차장 없음</div></div>`;
@@ -1014,35 +1016,86 @@ function stationTyping() {
     redraw();
     return;
   }
-  const hits = state.stations.filter((s) => s.slug.includes(slug)).slice(0, 24);
+  // 입력 원문도 slug로 만들되, 서울 제거 없이 따로 시도
+  const slugRaw = String(val).trim().toLowerCase().normalize("NFKC")
+    .replace(/[\s·•・]+/g, "").replace(/역+$/u, "").replace(/[^0-9a-z가-힣ㄱ-ㅎ]/gu, "");
+
+  // 우선순위: 1) 정확 일치  2) 앞부분 일치  3) 포함
+  const exact   = state.stations.filter((s) => s.slug === slug || s.slug === slugRaw);
+  const starts  = state.stations.filter((s) => !exact.includes(s) && (s.slug.startsWith(slug) || s.slug.startsWith(slugRaw)));
+  const contains = state.stations.filter((s) => !exact.includes(s) && !starts.includes(s) && (s.slug.includes(slug) || s.slug.includes(slugRaw)));
+  const hits = [...exact, ...starts, ...contains];
+
   if (!hits.length) {
-    state.pivot = null;
-    if (hi) hi.textContent = "역을 찾지 못했습니다.";
-    if (pivotDot) try { pivotDot.setMap(null); } catch {}
-    pivotDot = null;
-    redraw();
+    if (hi) hi.textContent = "검색 중…";
+    void kakaoGeoSearch(val, hi);
     return;
   }
-  hits.sort((a, b) => a.nameKr.length - b.nameKr.length);
+  // 각 그룹 내에서 이름 길이 짧은 순
   const best = hits[0];
-  state.pivot = best;
-  if (hi) hi.textContent = `${best.nameKr} · 반경 ${STATION_KM}km`;
+  setPivot({ nameKr: best.nameKr, slug: best.slug, lat: best.lat, lon: best.lon }, hi);
+}
+
+function setPivot(loc, hi) {
+  state.pivot = loc;
+  if (hi) hi.textContent = `📍 ${loc.nameKr} · 반경 ${STATION_KM}km`;
   if (map && window.kakao?.maps) {
     map.setLevel(6);
-    map.panTo(new kakao.maps.LatLng(best.lat, best.lon));
-  }
-  if (map && window.kakao?.maps) {
+    map.panTo(new kakao.maps.LatLng(loc.lat, loc.lon));
     if (pivotDot) try { pivotDot.setMap(null); } catch {}
     pivotDot = new kakao.maps.CustomOverlay({
-      position: new kakao.maps.LatLng(best.lat, best.lon),
-      content:
-        '<div style="width:14px;height:14px;border-radius:999px;background:#c4b5fd;border:2px solid #7c3aed;box-shadow:0 2px 10px rgba(0,0,0,.18)"></div>',
+      position: new kakao.maps.LatLng(loc.lat, loc.lon),
+      content: '<div style="width:14px;height:14px;border-radius:999px;background:#c4b5fd;border:2px solid #7c3aed;box-shadow:0 2px 10px rgba(0,0,0,.18)"></div>',
       zIndex: 950,
     });
     pivotDot.setMap(map);
     overlayObjs.push(pivotDot);
   }
   redraw();
+}
+
+async function kakaoGeoSearch(query, hi) {
+  const key = getKakaoRestKey() || getKakaoJsKey();
+  if (!key) {
+    // REST 키 없으면 카카오맵 SDK geocoder 사용
+    if (!window.kakao?.maps?.services) {
+      if (hi) hi.textContent = "검색 실패 (REST API 키 필요)";
+      state.pivot = null; redraw(); return;
+    }
+    const geocoder = new kakao.maps.services.Geocoder();
+    const places   = new kakao.maps.services.Places();
+    places.keywordSearch(query, (result, status) => {
+      if (status === kakao.maps.services.Status.OK && result.length) {
+        const r = result[0];
+        setPivot({ nameKr: r.place_name || query, slug: slugify(query), lat: Number(r.y), lon: Number(r.x) }, hi);
+      } else {
+        geocoder.addressSearch(query, (res, st) => {
+          if (st === kakao.maps.services.Status.OK && res.length) {
+            setPivot({ nameKr: query, slug: slugify(query), lat: Number(res[0].y), lon: Number(res[0].x) }, hi);
+          } else {
+            if (hi) hi.textContent = "장소를 찾지 못했습니다.";
+            state.pivot = null; redraw();
+          }
+        });
+      }
+    });
+    return;
+  }
+  try {
+    const url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}&size=1`;
+    const res = await fetch(url, { headers: { Authorization: `KakaoAK ${key}` } });
+    const js  = await res.json();
+    const doc = js.documents?.[0];
+    if (doc) {
+      setPivot({ nameKr: doc.place_name || query, slug: slugify(query), lat: Number(doc.y), lon: Number(doc.x) }, hi);
+    } else {
+      if (hi) hi.textContent = "장소를 찾지 못했습니다.";
+      state.pivot = null; redraw();
+    }
+  } catch {
+    if (hi) hi.textContent = "검색 실패";
+    state.pivot = null; redraw();
+  }
 }
 
 function stationClear() {
