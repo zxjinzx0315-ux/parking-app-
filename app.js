@@ -942,15 +942,28 @@ function redraw() {
   void exploreRun();
 }
 
+function openBottomSheet() {
+  const sheet = $("bottomSheet");
+  if (!sheet) return;
+  sheet.hidden = false;
+  requestAnimationFrame(() => sheet.classList.add("is-open"));
+}
+
+function closeBottomSheet() {
+  const sheet = $("bottomSheet");
+  if (!sheet) return;
+  sheet.classList.remove("is-open");
+}
+
 function selectLot(code) {
   state.pick = code;
   const lot = findLot(code);
   if (lot && lot.lat != null && lot.lon != null && map && window.kakao?.maps) {
-    // Kakao: smaller level => closer zoom
     map.setLevel(4);
     map.panTo(new kakao.maps.LatLng(lot.lat, lot.lon));
   }
   redraw();
+  if (code) openBottomSheet();
 }
 
 async function initMap() {
@@ -970,6 +983,11 @@ async function initMap() {
     level: 8,
   });
   infoWin = new kakao.maps.InfoWindow({ removable: false });
+  // 지도 빈 곳 클릭 시 하단 시트 닫기
+  kakao.maps.event.addListener(map, "click", () => {
+    closeBottomSheet();
+    if (infoWin) infoWin.close();
+  });
   redraw();
 }
 
@@ -1213,6 +1231,13 @@ function shareIt(lot) {
 
 function wire() {
   $("btnRefresh")?.addEventListener("click", () => void loadParking(true));
+
+  // 하단 시트 닫기 (핸들 클릭 or 스와이프)
+  $("btnCloseSheet")?.addEventListener("click", () => {
+    closeBottomSheet();
+    state.pick = null;
+    redraw();
+  });
 
   // 경차 / 전기차 필터 버튼
   function toggleFilter(key, btnId, label) {
