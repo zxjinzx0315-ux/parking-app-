@@ -347,12 +347,18 @@ async function loadICRows(key) {
 async function fetchAllPages(apiHttp, apiHttps, rootKey) {
   const acc = [];
   let start = 1;
+  // HTTPS 환경에선 HTTP 요청이 차단되므로 HTTPS 먼저, HTTP는 로컬에서만
+  const isSecure = location.protocol === "https:";
   for (;;) {
     const end = start + PAGE_SIZE - 1;
-    const js = await fetchJsonAny([
-      () => apiHttp.replace("{a}", String(start)).replace("{b}", String(end)),
-      () => apiHttps.replace("{a}", String(start)).replace("{b}", String(end)),
-    ]);
+    const httpUrl  = apiHttp.replace("{a}", String(start)).replace("{b}", String(end));
+    const httpsUrl = apiHttps.replace("{a}", String(start)).replace("{b}", String(end));
+    // HTTPS 환경: 서울 API HTTP 차단 → Vercel 프록시로 우회
+    const proxiedUrl = `/api/proxy?url=${encodeURIComponent(httpUrl)}`;
+    const makers = isSecure
+      ? [() => proxiedUrl, () => httpsUrl]
+      : [() => httpUrl, () => httpsUrl];
+    const js = await fetchJsonAny(makers);
     const root = js[rootKey] || js[rootKey.toUpperCase()] || {};
     const rows = Array.isArray(root.row) ? root.row : Array.isArray(root.ROW) ? root.ROW : [];
     if (!rows.length) break;
