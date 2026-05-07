@@ -84,6 +84,17 @@ body {
 }
 .searchOverlayInput::placeholder { color: #aab; }
 
+.searchOverlaySearch {
+  border: none;
+  background: #6366f1;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 5px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  line-height: 1;
+}
 .searchOverlayClear {
   border: none;
   background: none;
@@ -247,6 +258,79 @@ body {
 .sheetBtn.active {
   background: #fef3c7;
   border-color: #f59e0b;
+}
+.sheetBtn.park {
+  background: #f0fdf4;
+  border-color: #22c55e;
+  color: #15803d;
+}
+
+/* ── 혼잡 예측 ── */
+.congSection {
+  margin: 10px 0 8px;
+  background: #f8faff;
+  border-radius: 12px;
+  padding: 10px 12px 8px;
+}
+.congTitle {
+  font: 700 12px "SUIT", system-ui;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.congBarWrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 44px;
+}
+.congItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.congItem.now .congBar { opacity: 1 !important; outline: 2px solid #2563eb; border-radius: 3px; }
+.congBar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  min-height: 6px;
+}
+.congHour {
+  font-size: 9px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.congNote {
+  font-size: 9px;
+  color: #bbb;
+  margin-top: 4px;
+}
+
+/* ── 요금 계산 ── */
+.calcRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef9ec;
+  border: 1px solid #f6d860;
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+.calcLabel { font: 700 12px "SUIT", system-ui; color: #7a5a00; }
+.calcItem { font: 600 12px "SUIT", system-ui; color: #92400e; }
+
+/* ── 주차 중 세션 ── */
+.parkingSession {
+  background: #f0fdf4;
+  border: 1px solid #22c55e;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: 700 13px "SUIT", system-ui;
+  color: #15803d;
+  margin: 8px 0;
 }
 
 a {

@@ -14,7 +14,9 @@ const SUBWAY_CSV =
 const STATION_KM = 1.35;
 const EXPLORE_M = 800;
 const PAGE_SIZE = 1000;
-const FAV_KEY = "assistantSeoulParking.favorites.final";
+const FAV_KEY      = "assistantSeoulParking.favorites.final";
+const PARKING_KEY  = "assistantSeoulParking.currentParking";
+const HISTORY_KEY  = "assistantSeoulParking.parkingHistory";
 const OVERPASS_URLS = [
   "https://overpass.kumi.systems/api/interpreter",
   "https://overpass-api.de/api/interpreter",
@@ -750,34 +752,120 @@ function renderDetail() {
   const fav = state.fav.has(lot.code);
   const col = lot.remaining < 5 ? "#ef4444" : lot.remaining >= 10 ? "#22c55e" : "#2563eb";
   const feeStr = fmtFee(lot);
+  const session = getParkingSession();
+  const isParked = session?.code === lot.code;
+  const nowHour = new Date().getHours();
+
+  // 혼잡 예측 바 (현재 ±5시간)
+  const hours = Array.from({length: 8}, (_, i) => (nowHour - 1 + i) % 24);
+  const congBar = hours.map(h => {
+    const c = getCongestionLevel(h);
+    const isNow = h === nowHour;
+    return `<div class="congItem${isNow ? " now" : ""}">
+      <div class="congBar" style="height:${c.pct * 0.3 + 8}px;background:${c.color};opacity:${isNow?1:0.5}"></div>
+      <div class="congHour">${h}시</div>
+    </div>`;
+  }).join("");
+
+  // 요금 계산기 기본값 (1시간)
+  const fee1h = calcFee(lot, 60);
+  const fee2h = calcFee(lot, 120);
+  const feeCalcHtml = (lot.bscCrg != null || lot.payFree) ? `
+    <div class="calcRow">
+      <span class="calcLabel">💰 예상 요금</span>
+      <span class="calcItem">${lot.payFree ? "무료" : fee1h != null ? `1시간 ${fee1h.toLocaleString()}원` : "—"}</span>
+      <span class="calcItem">${lot.payFree ? "" : fee2h != null ? `2시간 ${fee2h.toLocaleString()}원` : ""}</span>
+    </div>` : "";
+
   el.innerHTML = `<div class="sheetDetail">
-    <div class="sheetDetailTop">
-      <div>
-        <div class="sheetDetailName">${escHtml(lot.name)}</div>
-        <div class="sheetDetailMeta">
-          <span style="color:${col};font-weight:800">잔여 ${lot.remaining}</span>
-          <span style="color:#888">/ ${lot.total}</span>
-          ${lot.evCharges ? `<span>⚡ ${lot.evCharges}</span>` : ""}
-          ${feeStr ? `<span>💰 ${feeStr}</span>` : ""}
-        </div>
-      </div>
+    <div class="sheetDetailName">${escHtml(lot.name)}</div>
+    <div class="sheetDetailMeta">
+      <span style="color:${col};font-weight:800">잔여 ${lot.remaining}</span>
+      <span style="color:#aaa">/ ${lot.total}</span>
+      ${lot.evCharges ? `<span>⚡${lot.evCharges}</span>` : ""}
+      ${feeStr ? `<span style="color:#7a5a00">💰${feeStr}</span>` : ""}
     </div>
+
+    ${feeCalcHtml}
+
+    <div class="congSection">
+      <div class="congTitle">🕐 시간대별 혼잡 예측</div>
+      <div class="congBarWrap">${congBar}</div>
+      <div class="congNote">* 도심 평균 패턴 기준 (실제와 다를 수 있음)</div>
+    </div>
+
+    ${isParked ? `
+    <div class="parkingSession">
+      🚗 주차 중 · ${fmtDuration(Date.now() - session.entryTime)}
+      <button class="sheetBtn" style="margin-top:6px;width:100%" id="btnEndParking">출차 완료</button>
+    </div>` : ""}
+
     <div class="sheetActionRow">
       <button type="button" class="sheetBtn primary" data-action="nav" data-code="${escHtml(lot.code)}">🧭 길안내</button>
+      ${!isParked ? `<button type="button" class="sheetBtn park" id="btnStartParking">🚗 여기 주차</button>` : ""}
       <button type="button" class="sheetBtn" data-action="share" data-code="${escHtml(lot.code)}">공유</button>
-      <button type="button" class="sheetBtn" data-action="rv" data-code="${escHtml(lot.code)}">로드뷰</button>
       <button type="button" class="sheetBtn${fav ? " active" : ""}" data-action="star" data-code="${escHtml(lot.code)}">⭐</button>
       <button type="button" class="sheetBtn" id="btnToggleExplore">🍜 주변</button>
     </div>
   </div>`;
 
-  // 주변 탭 토글
+  el.querySelector("#btnStartParking")?.addEventListener("click", () => startParking(lot));
+  el.querySelector("#btnEndParking")?.addEventListener("click", () => endParking());
   el.querySelector("#btnToggleExplore")?.addEventListener("click", () => {
     if (!exploreSection) return;
     const open = exploreSection.style.display !== "none";
     exploreSection.style.display = open ? "none" : "block";
     if (!open) void exploreRun();
   });
+}
+
+// ── 입차 기록 ──
+function getParkingSession() {
+  try { return JSON.parse(localStorage.getItem(PARKING_KEY) || "null"); } catch { return null; }
+}
+function startParking(lot) {
+  const session = { code: lot.code, name: lot.name, lat: lot.lat, lon: lot.lon, entryTime: Date.now() };
+  try { localStorage.setItem(PARKING_KEY, JSON.stringify(session)); } catch {}
+  toast(`🚗 ${lot.name} 주차 시작!`);
+  redraw();
+}
+function endParking() {
+  const session = getParkingSession();
+  if (!session) return;
+  const mins = Math.round((Date.now() - session.entryTime) / 60000);
+  try {
+    const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+    history.unshift({ ...session, exitTime: Date.now(), mins });
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 20)));
+    localStorage.removeItem(PARKING_KEY);
+  } catch {}
+  toast(`출차 완료 · 주차 시간 ${mins}분`);
+  redraw();
+}
+function fmtDuration(ms) {
+  const m = Math.floor(ms / 60000);
+  if (m < 60) return `${m}분`;
+  return `${Math.floor(m/60)}시간 ${m%60}분`;
+}
+
+// ── 요금 계산기 ──
+function calcFee(lot, mins) {
+  if (lot.payFree) return 0;
+  if (lot.bscCrg == null || lot.bscMin == null) return null;
+  if (mins <= lot.bscMin) return lot.bscCrg;
+  const extra = Math.ceil((mins - lot.bscMin) / (lot.addMin || lot.bscMin)) * (lot.addCrg || lot.bscCrg);
+  const total = lot.bscCrg + extra;
+  if (lot.dayMax && lot.dayMax > 0) return Math.min(total, lot.dayMax);
+  return total;
+}
+
+// ── 혼잡 예측 (시간대별 도심 패턴) ──
+const CONGESTION_PATTERN = [20,15,10,8,8,12,30,55,75,80,75,70,85,80,70,65,70,80,85,75,60,45,35,25];
+function getCongestionLevel(hour) {
+  const pct = CONGESTION_PATTERN[hour] ?? 50;
+  if (pct >= 75) return { label: "혼잡", color: "#ef4444", pct };
+  if (pct >= 50) return { label: "보통", color: "#f59e0b", pct };
+  return { label: "여유", color: "#22c55e", pct };
 }
 
 function fmtFee(lot) {
@@ -1032,6 +1120,27 @@ async function loadSubwayCsv() {
   redraw();
 }
 
+// 입력 중 → 힌트 표시만 (지도 이동 없음)
+function stationTypingHint() {
+  const inp = $("stationInput");
+  const hi = $("stationHint");
+  const val = inp instanceof HTMLInputElement ? inp.value.trim() : "";
+  if (!val) {
+    if (hi) hi.textContent = "";
+    return;
+  }
+  const slug = slugify(val);
+  if (!slug || !state.stations.length) { if (hi) hi.textContent = ""; return; }
+
+  const slugRaw = String(val).trim().toLowerCase().normalize("NFKC")
+    .replace(/[\s·•・]+/g, "").replace(/역+$/u, "").replace(/[^0-9a-z가-힣ㄱ-ㅎ]/gu, "");
+  const exact   = state.stations.filter((s) => s.slug === slug || s.slug === slugRaw);
+  const starts  = state.stations.filter((s) => !exact.includes(s) && (s.slug.startsWith(slug) || s.slug.startsWith(slugRaw)));
+  const hits = [...exact, ...starts].slice(0, 1);
+  if (hits.length && hi) hi.textContent = `↵ ${hits[0].nameKr} 로 이동`;
+}
+
+// Enter 키 / 검색 버튼 클릭 → 실제 이동
 function stationTyping() {
   const inp = $("stationInput");
   const hi = $("stationHint");
@@ -1065,7 +1174,6 @@ function stationTyping() {
     void kakaoGeoSearch(val, hi);
     return;
   }
-  // 각 그룹 내에서 이름 길이 짧은 순
   const best = hits[0];
   setPivot({ nameKr: best.nameKr, slug: best.slug, lat: best.lat, lon: best.lon }, hi);
 }
@@ -1343,7 +1451,17 @@ function wire() {
     state.nmSlug = slugify(li instanceof HTMLInputElement ? li.value : "");
     redraw();
   });
-  $("stationInput")?.addEventListener("input", () => stationTyping());
+  // 타이핑 중 → 힌트만 표시 (지도 이동 없음)
+  $("stationInput")?.addEventListener("input", () => stationTypingHint());
+  // Enter 키 → 실제 검색·이동
+  $("stationInput")?.addEventListener("keydown", (e) => {
+    if (/** @type {KeyboardEvent} */ (e).key === "Enter") {
+      e.preventDefault();
+      stationTyping();
+    }
+  });
+  // 🔍 버튼 → 실제 검색·이동
+  $("btnSearchStation")?.addEventListener("click", () => stationTyping());
 
   document.querySelectorAll("[data-explore-tab]").forEach((btn) =>
     btn.addEventListener("click", () => {
