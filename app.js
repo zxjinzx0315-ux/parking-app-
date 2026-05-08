@@ -319,14 +319,29 @@ async function loadGGRows(key) {
       if (!res.ok) { console.log("[경기 API] 응답 오류:", res.status); break; }
       const text = await res.text();
       if (page === 1) console.log("[경기 API] 응답 미리보기:", text.slice(0, 400));
-      let js;
-      try { js = JSON.parse(text); } catch { console.log("[경기 API] JSON 파싱 실패 - XML?"); break; }
-      const items = js?.getParkingPlaceInfoList?.item
-        ?? js?.response?.body?.items?.item
-        ?? js?.items?.item
-        ?? js?.item
-        ?? [];
-      const arr = Array.isArray(items) ? items : items ? [items] : [];
+      let arr = [];
+      if (text.trim().startsWith("<")) {
+        // XML 응답 파싱
+        try {
+          const xmlDoc = new DOMParser().parseFromString(text, "text/xml");
+          const itemEls = xmlDoc.querySelectorAll("item");
+          itemEls.forEach((el) => {
+            const obj = {};
+            el.childNodes.forEach((n) => { if (n.nodeType === 1) obj[n.nodeName] = n.textContent ?? ""; });
+            arr.push(obj);
+          });
+          console.log(`[경기 API] XML 파싱 성공, page ${page}: ${arr.length}개`);
+        } catch { console.log("[경기 API] XML 파싱 실패"); break; }
+      } else {
+        let js;
+        try { js = JSON.parse(text); } catch { console.log("[경기 API] JSON 파싱 실패"); break; }
+        const items = js?.getParkingPlaceInfoList?.item
+          ?? js?.response?.body?.items?.item
+          ?? js?.items?.item
+          ?? js?.item
+          ?? [];
+        arr = Array.isArray(items) ? items : items ? [items] : [];
+      }
       if (!arr.length) break;
       rows.push(...arr);
       if (arr.length < 1000) break;
